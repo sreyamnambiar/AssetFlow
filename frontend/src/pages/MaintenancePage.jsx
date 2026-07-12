@@ -1,222 +1,121 @@
-import { useEffect, useState } from 'react';
-import {
-  createMaintenanceRequest,
-  deleteMaintenanceRequest,
-  fetchMaintenanceRequests,
-  fetchTechnicians,
-  updateMaintenanceRequest,
-} from '../api/maintenance.js';
-import { fetchAssets } from '../api/assets.js';
-import ConfirmationModal from '../components/ConfirmationModal.jsx';
-import Loader from '../components/Loader.jsx';
-import MaintenanceForm from '../components/MaintenanceForm.jsx';
-import MaintenanceTable from '../components/MaintenanceTable.jsx';
-import MaintenanceTimeline from '../components/MaintenanceTimeline.jsx';
-import TechnicianAssignModal from '../components/TechnicianAssignModal.jsx';
-import ToastNotification from '../components/ToastNotification.jsx';
+import React, { useState, useEffect } from 'react';
+import axios from 'axios';
+import MaintenanceTimeline from '../components/MaintenanceTimeline';
+import MaintenanceForm from '../components/MaintenanceForm';
+import MaintenanceTable from '../components/MaintenanceTable';
 
-function useToast() {
-  const [toast, setToast] = useState(null);
-  return {
-    toast,
-    notify: (type, title, message) => setToast({ type, title, message }),
-    close: () => setToast(null),
-  };
-}
-
-export default function MaintenancePage() {
-  const { toast, notify, close } = useToast();
-  const [assets, setAssets] = useState([]);
+const MaintenancePage = () => {
   const [requests, setRequests] = useState([]);
-  const [technicians, setTechnicians] = useState([]);
-  const [loading, setLoading] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [search, setSearch] = useState('');
-  const [status, setStatus] = useState('');
-  const [priority, setPriority] = useState('');
-  const [page, setPage] = useState(1);
-  const [pagination, setPagination] = useState({ page: 1, totalPages: 1 });
-  const [editingRequest, setEditingRequest] = useState(null);
-  const [cancelTarget, setCancelTarget] = useState(null);
-  const [assignTarget, setAssignTarget] = useState(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('board'); // 'board' or 'list'
+  const [assets, setAssets] = useState([]);
 
-  async function loadAssets() {
-    const items = await fetchAssets();
-    setAssets(items);
-  }
-
-  async function loadTechnicians() {
-    try {
-      const items = await fetchTechnicians();
-      setTechnicians(items);
-    } catch {
-      setTechnicians([]);
-    }
-  }
-
-  async function loadRequests() {
+  const fetchRequests = async () => {
     setLoading(true);
     try {
-      const response = await fetchMaintenanceRequests({ page, limit: 10, search: search || undefined, status: status || undefined, priority: priority || undefined });
-      setRequests(response.data || []);
-      setPagination(response.meta || { page: 1, totalPages: 1 });
-    } catch (error) {
-      notify('error', 'Maintenance not loaded', String(error));
+      const res = await axios.get('/api/maintenance');
+      setRequests(res.data);
+    } catch (err) {
+      setError(err.response?.data?.message || err.message);
     } finally {
       setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    loadAssets().catch((error) => notify('error', 'Assets not loaded', String(error)));
-    loadTechnicians().catch((error) => notify('error', 'Technicians not loaded', String(error)));
+    fetchRequests();
+    
+    // Fetch mock assets for the form
+    axios.get('/api/assets').then(res => setAssets(res.data)).catch(() => {
+      setAssets([
+        { _id: '64a7f9b8c2d1e4f3a5b6c7d1', name: 'Conference Room A1', assetCode: 'RM-A1', status: 'available' },
+        { _id: '64a7f9b8c2d1e4f3a5b6c7d2', name: 'Conference Room B2', assetCode: 'RM-B2', status: 'available' },
+        { _id: '64a7f9b8c2d1e4f3a5b6c7d3', name: 'Projector', assetCode: 'AF-0062', status: 'available' }
+      ]);
+    });
   }, []);
 
-  useEffect(() => {
-    loadRequests().catch((error) => notify('error', 'Maintenance not loaded', String(error)));
-  }, [page, search, status, priority]);
-
-  async function handleSubmit(form, isEditing) {
-    setSaving(true);
+  const handleCreateRequest = async (formData) => {
     try {
-      if (isEditing && editingRequest) {
-        await updateMaintenanceRequest(editingRequest._id, form);
-        notify('success', 'Request updated', 'The maintenance request has been updated.');
-      } else {
-        await createMaintenanceRequest(form);
-        notify('success', 'Request created', 'The maintenance request has been submitted.');
-      }
-      setEditingRequest(null);
-      await loadRequests();
-    } catch (error) {
-      notify('error', 'Maintenance failed', String(error));
-    } finally {
-      setSaving(false);
+      await axios.post('/api/maintenance', formData);
+      setShowForm(false);
+      fetchRequests();
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to create request');
     }
-  }
+  };
 
-  async function handleWorkflowAction(request, nextStatus) {
+  const handleStatusChange = async (requestId, newStatus) => {
     try {
-      if (nextStatus === 'technician_assigned') {
-        if (!technicians.length) {
-          notify('error', 'No technician available', 'Create or seed a technician user before assigning this request.');
-          return;
-        }
-        setAssignTarget(request);
-        return;
-      }
-
-      if (nextStatus === 'in_progress' && !request.technician) {
-        notify('error', 'Technician required', 'Assign a technician before moving the request into progress.');
-        return;
-      }
-
-      await updateMaintenanceRequest(request._id, { status: nextStatus, technician: request.technician?._id || request.technician });
-      notify('success', 'Workflow updated', `Request moved to ${nextStatus.replace(/_/g, ' ')}.`);
-      await loadRequests();
-    } catch (error) {
-      notify('error', 'Workflow failed', String(error));
+      await axios.put(`/api/maintenance/${requestId}`, { status: newStatus });
+      fetchRequests(); // Refresh the board
+    } catch (err) {
+      alert(err.response?.data?.message || 'Failed to update status');
     }
-  }
-
-  async function confirmAssign(technicianId) {
-    if (!assignTarget) return;
-    if (!technicianId) {
-      notify('error', 'Technician required', 'Please select a technician before assigning the request.');
-      return;
-    }
-
-    try {
-      await updateMaintenanceRequest(assignTarget._id, { status: 'technician_assigned', technician: technicianId });
-      notify('success', 'Technician assigned', 'The request has been assigned successfully.');
-      setAssignTarget(null);
-      await loadRequests();
-    } catch (error) {
-      notify('error', 'Assignment failed', String(error));
-    }
-  }
-
-  async function confirmCancel() {
-    if (!cancelTarget) return;
-    try {
-      await deleteMaintenanceRequest(cancelTarget._id);
-      notify('success', 'Request cancelled', 'The maintenance request was cancelled successfully.');
-      setCancelTarget(null);
-      await loadRequests();
-    } catch (error) {
-      notify('error', 'Cancellation failed', String(error));
-    }
-  }
+  };
 
   return (
-    <div className="space-y-6">
-      <ToastNotification toast={toast} onClose={close} />
-      <ConfirmationModal
-        open={Boolean(cancelTarget)}
-        title="Cancel maintenance request?"
-        message="This will mark the request as cancelled and keep it in history."
-        confirmLabel="Cancel request"
-        onConfirm={confirmCancel}
-        onClose={() => setCancelTarget(null)}
-      />
-      <TechnicianAssignModal
-        open={Boolean(assignTarget)}
-        technicians={technicians}
-        onConfirm={confirmAssign}
-        onClose={() => setAssignTarget(null)}
-      />
-
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-sketch backdrop-blur-sm">
-        <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-          <div>
-            <p className="handwriting text-2xl text-white/60">Screen 7</p>
-            <h2 className="handwriting text-5xl text-white">Maintenance Management</h2>
-            <p className="mt-2 max-w-2xl text-sm text-white/55">Raise maintenance requests, route them through approval stages, and automatically update asset state on approval and resolution.</p>
-          </div>
-
-          <div className="grid gap-3 md:grid-cols-3 lg:w-[62%]">
-            <label className="space-y-2">
-              <span className="text-sm text-white/65">Search</span>
-              <input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="Search issue" className="w-full rounded-2xl border border-white/15 bg-[#0f0f0f] px-4 py-3 text-sm text-white outline-none focus:border-emerald-400/50" />
-            </label>
-            <label className="space-y-2">
-              <span className="text-sm text-white/65">Status</span>
-              <select value={status} onChange={(event) => { setStatus(event.target.value); setPage(1); }} className="w-full rounded-2xl border border-white/15 bg-[#0f0f0f] px-4 py-3 text-sm text-white outline-none focus:border-emerald-400/50">
-                <option value="">All</option>
-                <option value="pending">Pending</option>
-                <option value="approved">Approved</option>
-                <option value="technician_assigned">Technician Assigned</option>
-                <option value="in_progress">In Progress</option>
-                <option value="resolved">Resolved</option>
-                <option value="rejected">Rejected</option>
-                <option value="cancelled">Cancelled</option>
-              </select>
-            </label>
-            <label className="space-y-2">
-              <span className="text-sm text-white/65">Priority</span>
-              <select value={priority} onChange={(event) => { setPriority(event.target.value); setPage(1); }} className="w-full rounded-2xl border border-white/15 bg-[#0f0f0f] px-4 py-3 text-sm text-white outline-none focus:border-emerald-400/50">
-                <option value="">All</option>
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </label>
+    <div className="p-6 bg-gray-950 h-full text-gray-200 flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <div className="flex items-center gap-6">
+          <h1 className="text-2xl font-bold">Maintenance Management</h1>
+          <div className="bg-gray-900 p-1 rounded-md border border-gray-800 hidden sm:flex">
+            <button 
+              onClick={() => setActiveTab('board')}
+              className={`px-4 py-1.5 rounded-md text-sm transition-colors ${activeTab === 'board' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              Board View
+            </button>
+            <button 
+              onClick={() => setActiveTab('list')}
+              className={`px-4 py-1.5 rounded-md text-sm transition-colors ${activeTab === 'list' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              List View
+            </button>
           </div>
         </div>
-      </section>
-
-      <div className="grid gap-6 xl:grid-cols-[1.05fr_1.4fr]">
-        <div className="space-y-6">
-          <MaintenanceForm assets={assets} initialValues={editingRequest} onSubmit={handleSubmit} onCancelEdit={() => setEditingRequest(null)} loading={saving} />
-          {loading ? <Loader label="Loading maintenance data..." /> : null}
-        </div>
-
-        <MaintenanceTimeline requests={requests} onAction={handleWorkflowAction} />
+        <button 
+          onClick={() => setShowForm(!showForm)}
+          className="bg-green-900 hover:bg-green-800 text-green-100 border border-green-700 py-2 px-4 rounded-md shadow-sm"
+        >
+          {showForm ? 'Cancel' : '+ New Request'}
+        </button>
       </div>
 
-      <section className="space-y-6">
-        <MaintenanceTable items={requests} loading={loading} pagination={pagination} onPageChange={setPage} onEdit={setEditingRequest} onCancel={setCancelTarget} />
-      </section>
+      {showForm && (
+        <div className="mb-6">
+          <MaintenanceForm 
+            assets={assets} 
+            onSubmit={handleCreateRequest} 
+            onCancel={() => setShowForm(false)} 
+          />
+        </div>
+      )}
+
+      {loading ? (
+        <div className="flex justify-center items-center h-64">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+        </div>
+      ) : error ? (
+        <div className="text-red-500 bg-red-900/20 p-4 rounded-md">{error}</div>
+      ) : (
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {activeTab === 'board' ? (
+            <>
+              <MaintenanceTimeline requests={requests} onStatusChange={handleStatusChange} />
+              <div className="mt-4 text-sm text-gray-500">
+                Approving a card moves the asset to under maintenance, resolving return it to availble
+              </div>
+            </>
+          ) : (
+            <MaintenanceTable requests={requests} onRefresh={fetchRequests} />
+          )}
+        </div>
+      )}
     </div>
   );
-}
+};
+
+export default MaintenancePage;

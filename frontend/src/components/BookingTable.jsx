@@ -1,73 +1,111 @@
-import StatusBadge from './StatusBadge.jsx';
+import React, { useState } from 'react';
+import axios from 'axios';
+import StatusBadge from './StatusBadge';
 
-export default function BookingTable({ items = [], loading = false, onEdit, onCancel, pagination = {}, onPageChange }) {
+const BookingTable = ({ bookings, onRefresh }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [statusFilter, setStatusFilter] = useState('');
+
+  const filteredBookings = bookings.filter(b => {
+    const matchesSearch = (b.assetId?.name || '').toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter ? b.status === statusFilter : true;
+    return matchesSearch && matchesStatus;
+  });
+
+  const handleCancel = async (id) => {
+    if (!window.confirm('Are you sure you want to cancel this booking?')) return;
+    try {
+      await axios.put(`/api/bookings/${id}`, { status: 'cancelled' });
+      onRefresh();
+    } catch (err) {
+      alert('Failed to cancel booking');
+    }
+  };
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this record entirely?')) return;
+    try {
+      await axios.delete(`/api/bookings/${id}`);
+      onRefresh();
+    } catch (err) {
+      alert('Failed to delete booking');
+    }
+  };
+
   return (
-    <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-sketch backdrop-blur-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="handwriting text-3xl text-white">Booking History</h3>
-          <p className="mt-1 text-sm text-white/55">Track upcoming, ongoing, and resolved reservations.</p>
-        </div>
+    <div className="bg-gray-900 rounded-lg p-6 border border-gray-800">
+      <div className="flex flex-col md:flex-row justify-between mb-6 gap-4">
+        <input 
+          type="text"
+          placeholder="Search by resource name..."
+          className="bg-gray-950 border border-gray-700 rounded-md px-4 py-2 text-sm text-white w-full md:w-64"
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+        <select 
+          className="bg-gray-950 border border-gray-700 rounded-md px-4 py-2 text-sm text-white w-full md:w-48"
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+        >
+          <option value="">All Statuses</option>
+          <option value="upcoming">Upcoming</option>
+          <option value="ongoing">Ongoing</option>
+          <option value="completed">Completed</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
       </div>
 
-      <div className="mt-5 overflow-hidden rounded-3xl border border-white/10">
-        <div className="overflow-x-auto scrollbar-thin">
-          <table className="min-w-full text-left text-sm">
-            <thead className="bg-white/5 text-white/70">
-              <tr>
-                <th className="px-4 py-3 font-semibold">Resource</th>
-                <th className="px-4 py-3 font-semibold">Date</th>
-                <th className="px-4 py-3 font-semibold">Time</th>
-                <th className="px-4 py-3 font-semibold">Purpose</th>
-                <th className="px-4 py-3 font-semibold">Status</th>
-                <th className="px-4 py-3 font-semibold">Actions</th>
+      <div className="overflow-x-auto">
+        <table className="w-full text-left text-sm text-gray-400">
+          <thead className="text-xs text-gray-500 uppercase bg-gray-800 border-b border-gray-700">
+            <tr>
+              <th className="px-6 py-3">Resource</th>
+              <th className="px-6 py-3">Date</th>
+              <th className="px-6 py-3">Time</th>
+              <th className="px-6 py-3">Status</th>
+              <th className="px-6 py-3 text-right">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filteredBookings.length > 0 ? filteredBookings.map((booking) => (
+              <tr key={booking._id} className="border-b border-gray-800 hover:bg-gray-800/50">
+                <td className="px-6 py-4 font-medium text-gray-200">
+                  {booking.assetId?.name || 'Unknown Asset'}
+                </td>
+                <td className="px-6 py-4">{new Date(booking.bookingDate).toLocaleDateString()}</td>
+                <td className="px-6 py-4">{booking.startTime} - {booking.endTime}</td>
+                <td className="px-6 py-4">
+                  <StatusBadge status={booking.status} />
+                </td>
+                <td className="px-6 py-4 text-right">
+                  {booking.status === 'upcoming' && (
+                    <button 
+                      onClick={() => handleCancel(booking._id)}
+                      className="text-yellow-500 hover:text-yellow-400 mr-4"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                  <button 
+                    onClick={() => handleDelete(booking._id)}
+                    className="text-red-500 hover:text-red-400"
+                  >
+                    Delete
+                  </button>
+                </td>
               </tr>
-            </thead>
-            <tbody>
-              {loading ? (
-                <tr>
-                  <td className="px-4 py-8 text-white/60" colSpan="6">Loading bookings...</td>
-                </tr>
-              ) : items.length ? (
-                items.map((item) => (
-                  <tr key={item._id} className="border-t border-white/10 text-white/85">
-                    <td className="px-4 py-4">
-                      <div className="font-medium text-white">{item.assetId?.name || 'Unknown Resource'}</div>
-                      <div className="text-xs text-white/45">{item.assetId?.assetCode || item.assetId?._id}</div>
-                    </td>
-                    <td className="px-4 py-4">{item.bookingDate}</td>
-                    <td className="px-4 py-4">{item.startTime} - {item.endTime}</td>
-                    <td className="px-4 py-4 max-w-xs">
-                      <p className="overflow-hidden text-ellipsis text-white/80">{item.purpose}</p>
-                    </td>
-                    <td className="px-4 py-4"><StatusBadge status={item.status} /></td>
-                    <td className="px-4 py-4">
-                      <div className="flex flex-wrap gap-2">
-                        <button type="button" onClick={() => onEdit(item)} className="rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 hover:bg-white/5">Edit</button>
-                        <button type="button" onClick={() => onCancel(item)} className="rounded-xl border border-red-400/30 bg-red-500/10 px-3 py-2 text-xs font-semibold text-red-100 hover:bg-red-500/20">Cancel</button>
-                      </div>
-                    </td>
-                  </tr>
-                ))
-              ) : (
-                <tr>
-                  <td className="px-4 py-8 text-white/60" colSpan="6">No bookings found.</td>
-                </tr>
-              )}
-            </tbody>
-          </table>
-        </div>
+            )) : (
+              <tr>
+                <td colSpan="5" className="px-6 py-8 text-center text-gray-500">
+                  No bookings found matching your criteria.
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
       </div>
-
-      <div className="mt-4 flex flex-wrap items-center justify-between gap-3 text-sm text-white/60">
-        <span>
-          Page {pagination.page || 1} of {pagination.totalPages || 1}
-        </span>
-        <div className="flex gap-2">
-          <button type="button" disabled={(pagination.page || 1) <= 1} onClick={() => onPageChange((pagination.page || 1) - 1)} className="rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 disabled:opacity-40">Previous</button>
-          <button type="button" disabled={(pagination.page || 1) >= (pagination.totalPages || 1)} onClick={() => onPageChange((pagination.page || 1) + 1)} className="rounded-xl border border-white/15 px-3 py-2 text-xs font-semibold text-white/75 disabled:opacity-40">Next</button>
-        </div>
-      </div>
-    </section>
+    </div>
   );
-}
+};
+
+export default BookingTable;

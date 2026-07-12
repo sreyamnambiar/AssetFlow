@@ -1,10 +1,24 @@
-const priorityStyles = {
-  low: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-100',
-  medium: 'border-amber-400/40 bg-amber-500/15 text-amber-100',
-  high: 'border-red-400/40 bg-red-500/15 text-red-100',
+import React from 'react';
+
+const PriorityBadge = ({ priority }) => {
+  const getPriorityStyles = (priority) => {
+    switch (priority?.toLowerCase()) {
+      case 'high':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'medium':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'low':
+        return 'bg-green-100 text-green-800 border-green-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getPriorityStyles(priority)}`}>
+      {priority || 'None'}
+    </span>
+  );
 };
 
-export default function PriorityBadge({ priority }) {
-  const tone = priorityStyles[priority] || 'border-white/15 bg-white/5 text-white/80';
-  return <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${tone}`}>{priority || 'unknown'}</span>;
-}
+export default PriorityBadge;
