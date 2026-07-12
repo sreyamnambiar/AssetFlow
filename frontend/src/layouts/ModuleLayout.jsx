@@ -49,7 +49,24 @@ export default function ModuleLayout() {
               <button type="button" onClick={() => setOpen(true)} className="mr-3 rounded-xl border border-white/15 px-3 py-2 text-sm lg:hidden">Menu</button>
               <span className="handwriting text-2xl text-white/80">Enterprise Asset & Resource Management</span>
             </div>
-            <div className="hidden rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70 sm:block">Module 3</div>
+            <div className="hidden items-center gap-4 sm:flex">
+              <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">Module 3</div>
+              {localStorage.getItem('token') ? (
+                <button 
+                  onClick={() => { localStorage.removeItem('token'); window.location.href = '/login'; }}
+                  className="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-2 text-sm text-red-400 hover:bg-red-500/20"
+                >
+                  Sign Out
+                </button>
+              ) : (
+                <NavLink 
+                  to="/login"
+                  className="rounded-xl border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm text-emerald-400 hover:bg-emerald-500/20"
+                >
+                  Sign In
+                </NavLink>
+              )}
+            </div>
           </header>
 
           <main className="relative flex-1 overflow-y-auto p-4 sm:p-6 scrollbar-thin">

@@ -12,13 +12,20 @@ import { connectDb } from './config/db.js';
 const port = process.env.PORT || 5000;
 
 async function start() {
-  await connectDb();
+  try {
+    await connectDb();
+    console.log('✅ Connected to MongoDB successfully.');
+  } catch (error) {
+    console.warn('⚠️ WARNING: Failed to connect to MongoDB. The server will still start, but database-dependent features (like Authentication) will fail until you provide a valid MONGO_URI.');
+    console.warn(`Error details: ${error.message}`);
+  }
+
+  // Start the server regardless of DB connection so mock features still work!
   app.listen(port, () => {
-    console.log(`AssetFlow API running on port ${port}`);
+    console.log(`🚀 AssetFlow API running on port ${port}`);
   });
 }
 
 start().catch((error) => {
   console.error('Failed to start server:', error);
-  process.exit(1);
 });
