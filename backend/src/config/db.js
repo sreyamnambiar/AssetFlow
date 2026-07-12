@@ -1,12 +1,11 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-export async function connectDb() {
-  const mongoUri = process.env.MONGO_URI;
-
-  if (!mongoUri) {
-    throw new Error('MONGO_URI is not configured');
+export const connectDb = async () => {
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is not configured");
   }
 
-  mongoose.set('strictQuery', true);
-  await mongoose.connect(mongoUri);
-}
+  await mongoose.connect(process.env.MONGO_URI);
+
+  console.log("MongoDB connected");
+};
