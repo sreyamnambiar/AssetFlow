@@ -1,19 +1,37 @@
-const statusStyles = {
-  upcoming: 'border-sky-400/40 bg-sky-500/15 text-sky-100',
-  ongoing: 'border-amber-400/40 bg-amber-500/15 text-amber-100',
-  completed: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-100',
-  cancelled: 'border-red-400/40 bg-red-500/15 text-red-100',
-  pending: 'border-slate-400/40 bg-slate-500/15 text-slate-100',
-  approved: 'border-blue-400/40 bg-blue-500/15 text-blue-100',
-  technician_assigned: 'border-cyan-400/40 bg-cyan-500/15 text-cyan-100',
-  in_progress: 'border-amber-400/40 bg-amber-500/15 text-amber-100',
-  resolved: 'border-emerald-400/40 bg-emerald-500/15 text-emerald-100',
-  rejected: 'border-red-400/40 bg-red-500/15 text-red-100',
+import React from 'react';
+
+const StatusBadge = ({ status }) => {
+  const getStatusStyles = (status) => {
+    switch (status?.toLowerCase()) {
+      case 'available':
+      case 'resolved':
+      case 'completed':
+        return 'bg-green-100 text-green-800 border-green-200';
+      case 'in_use':
+      case 'ongoing':
+      case 'in progress':
+        return 'bg-blue-100 text-blue-800 border-blue-200';
+      case 'under_maintenance':
+      case 'technician assigned':
+        return 'bg-yellow-100 text-yellow-800 border-yellow-200';
+      case 'unavailable':
+      case 'cancelled':
+        return 'bg-red-100 text-red-800 border-red-200';
+      case 'pending':
+      case 'upcoming':
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+      case 'approved':
+        return 'bg-indigo-100 text-indigo-800 border-indigo-200';
+      default:
+        return 'bg-gray-100 text-gray-800 border-gray-200';
+    }
+  };
+
+  return (
+    <span className={`px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(status)}`}>
+      {status ? status.replace('_', ' ') : 'Unknown'}
+    </span>
+  );
 };
 
-export default function StatusBadge({ status, className = '' }) {
-  const label = String(status || '').replace(/_/g, ' ');
-  const tone = statusStyles[status] || 'border-white/15 bg-white/5 text-white/80';
-
-  return <span className={`inline-flex items-center rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${tone} ${className}`}>{label}</span>;
-}
+export default StatusBadge;

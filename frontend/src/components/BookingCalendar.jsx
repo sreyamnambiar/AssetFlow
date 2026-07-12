@@ -1,63 +1,78 @@
-const HOURS = ['09:00', '10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+import React from 'react';
 
-function timeToMinutes(value) {
-  const [hours, minutes] = value.split(':').map(Number);
-  return hours * 60 + minutes;
-}
+const BookingCalendar = ({ bookings, newBooking }) => {
+  // Generate time slots from 9:00 AM to 5:00 PM
+  const timeSlots = Array.from({ length: 9 }, (_, i) => i + 9);
 
-export default function BookingCalendar({ bookings = [], selectedDate, selectedResource, onBookSlot }) {
-  const minMinutes = timeToMinutes('09:00');
-  const maxMinutes = timeToMinutes('18:00');
-  const rangeMinutes = maxMinutes - minMinutes;
+  // Helper to calculate position and height based on time strings "HH:mm"
+  const getStyleForTime = (startTime, endTime) => {
+    const [startH, startM] = startTime.split(':').map(Number);
+    const [endH, endM] = endTime.split(':').map(Number);
+    
+    // Assume timeline starts at 9:00 AM, each hour is 60px
+    const top = ((startH - 9) * 60) + startM;
+    const height = ((endH - startH) * 60) + (endM - startM);
+    
+    return {
+      top: `${top}px`,
+      height: `${height}px`,
+      position: 'absolute',
+      width: 'calc(100% - 60px)',
+      left: '60px',
+    };
+  };
 
-  const dayBookings = bookings.filter((booking) => booking.bookingDate === selectedDate && `${booking.assetId?._id || booking.assetId}` === `${selectedResource}` && booking.status !== 'cancelled');
+  const isConflict = (startTime, endTime) => {
+    if (!startTime || !endTime) return false;
+    return bookings.some(b => 
+      b.status !== 'cancelled' &&
+      startTime < b.endTime && 
+      endTime > b.startTime
+    );
+  };
 
   return (
-    <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 shadow-sketch backdrop-blur-sm">
-      <div className="flex items-center justify-between gap-3">
-        <div>
-          <h3 className="handwriting text-3xl text-white">Calendar / Timeline View</h3>
-          <p className="mt-1 text-sm text-white/55">Daily schedule for the selected resource.</p>
-        </div>
-        <button type="button" onClick={onBookSlot} className="rounded-2xl border border-emerald-400/30 bg-emerald-900/70 px-4 py-2 text-sm font-semibold text-emerald-50 hover:bg-emerald-800">Book a slot</button>
-      </div>
-
-      <div className="mt-5 overflow-hidden rounded-3xl border border-white/10 bg-[#0f0f0f]">
-        <div className="grid grid-cols-[72px_1fr]">
-          <div className="border-r border-white/10">
-            {HOURS.map((hour) => (
-              <div key={hour} className="flex h-14 items-start justify-end px-3 pt-2 text-sm text-white/65">
-                {hour.replace(':00', '')}:00
-              </div>
-            ))}
+    <div className="bg-gray-900 rounded-lg p-6 text-gray-300 relative border border-gray-700 h-[calc(100vh-240px)] overflow-y-auto">
+      <div className="relative" style={{ height: '540px' }}>
+        {/* Render Time Slots Background */}
+        {timeSlots.map((hour) => (
+          <div key={hour} className="flex border-b border-gray-800 h-[60px]">
+            <div className="w-[60px] text-sm text-gray-500 pr-2 pt-1 border-r border-gray-800">
+              {hour}:00
+            </div>
+            <div className="flex-1"></div>
           </div>
+        ))}
 
-          <div className="relative">
-            {HOURS.map((hour) => (
-              <div key={hour} className="h-14 border-b border-dashed border-white/10" />
-            ))}
-
-            {dayBookings.length ? dayBookings.map((booking) => {
-              const top = ((timeToMinutes(booking.startTime) - minMinutes) / rangeMinutes) * (HOURS.length * 56);
-              const height = ((timeToMinutes(booking.endTime) - timeToMinutes(booking.startTime)) / rangeMinutes) * (HOURS.length * 56);
-              const overlap = dayBookings.some((other) => other._id !== booking._id && timeToMinutes(other.startTime) < timeToMinutes(booking.endTime) && timeToMinutes(other.endTime) > timeToMinutes(booking.startTime));
-
-              return (
-                <div key={booking._id} className={`absolute left-4 right-4 rounded-2xl border px-4 py-3 text-sm shadow-lg ${overlap ? 'border-red-300/70 bg-red-500/20 text-red-50' : 'border-sky-300/50 bg-sky-500/20 text-white'}`} style={{ top: `${top + 2}px`, height: `${Math.max(height - 4, 48)}px` }}>
-                  <div className="font-semibold">{booking.assetId?.assetCode || booking.assetId?.name || 'Booked'}</div>
-                  <div className="mt-1 text-xs opacity-90">{booking.purpose}</div>
-                  <div className="mt-1 text-xs opacity-80">{booking.startTime} - {booking.endTime}</div>
-                  {overlap ? <div className="mt-1 text-xs font-semibold uppercase tracking-wide">Conflict detected</div> : null}
-                </div>
-              );
-            }) : (
-              <div className="absolute inset-0 flex items-center justify-center p-6 text-center text-sm text-white/45">
-                No bookings for this resource and date.
-              </div>
-            )}
+        {/* Render Existing Bookings */}
+        {bookings.map((booking) => (
+          <div 
+            key={booking._id}
+            style={getStyleForTime(booking.startTime, booking.endTime)}
+            className="bg-blue-900/60 border border-blue-500 rounded-md p-2 text-sm text-blue-100 overflow-hidden flex flex-col justify-center"
+          >
+            <span>Booked - {booking.purpose} - {booking.startTime} to {booking.endTime}</span>
           </div>
-        </div>
+        ))}
+
+        {/* Render New Booking Preview if any */}
+        {newBooking?.startTime && newBooking?.endTime && (
+          <div 
+            style={getStyleForTime(newBooking.startTime, newBooking.endTime)}
+            className={`border-2 border-dashed rounded-md p-2 text-sm flex flex-col justify-center
+              ${isConflict(newBooking.startTime, newBooking.endTime) 
+                ? 'bg-red-900/20 border-red-500 text-red-300 z-10' 
+                : 'bg-green-900/20 border-green-500 text-green-300 z-10'}`}
+          >
+            {isConflict(newBooking.startTime, newBooking.endTime) 
+              ? <span>Requested {newBooking.startTime} to {newBooking.endTime} - conflict - slot is unavailable</span>
+              : <span>Requested {newBooking.startTime} to {newBooking.endTime} - slot available</span>
+            }
+          </div>
+        )}
       </div>
-    </section>
+    </div>
   );
-}
+};
+
+export default BookingCalendar;
