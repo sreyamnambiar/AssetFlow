@@ -2,15 +2,15 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
-  { label: 'Dashboard', to: '#' },
-  { label: 'Organization setup', to: '#' },
-  { label: 'Assets', to: '#' },
+  { label: 'Dashboard',           to: '#' },
+  { label: 'Organization setup',  to: '#' },
+  { label: 'Assets',              to: '#' },
   { label: 'Allocation & Transfer', to: '#' },
-  { label: 'Resource Booking', to: '/resource-booking' },
-  { label: 'Maintenance', to: '/maintenance' },
-  { label: 'Audit', to: '/audit' },
-  { label: 'Reports', to: '#' },
-  { label: 'Notifications', to: '#' },
+  { label: 'Resource Booking',    to: '/resource-booking' },
+  { label: 'Maintenance',         to: '/maintenance' },
+  { label: 'Audit',               to: '/audit' },
+  { label: 'Reports',             to: '/reports' },
+  { label: 'Notifications',       to: '#' },
 ];
 
 export default function ModuleLayout() {
@@ -28,18 +28,27 @@ export default function ModuleLayout() {
           </div>
 
           <nav className="space-y-2">
-            {navItems.map((item) => {
-              const active = item.to !== '#' && typeof window !== 'undefined' && window.location.pathname === item.to;
-              const linkClasses = `block rounded-2xl border px-4 py-2 text-sm transition ${active ? 'border-emerald-300/60 bg-emerald-900/40 text-emerald-50' : 'border-transparent text-white/80 hover:border-white/10 hover:bg-white/5'}`;
-
-              return item.to === '#' ? (
-                <span key={item.label} className="block rounded-2xl border border-transparent px-4 py-2 text-sm text-white/70">{item.label}</span>
+            {navItems.map((item) =>
+              item.to === '#' ? (
+                <span key={item.label} className="block rounded-2xl border border-transparent px-4 py-2 text-sm text-white/70">
+                  {item.label}
+                </span>
               ) : (
-                <NavLink key={item.label} to={item.to} className={({ isActive }) => `block rounded-2xl border px-4 py-2 text-sm transition ${isActive ? 'border-emerald-300/60 bg-emerald-900/40 text-emerald-50' : 'border-transparent text-white/80 hover:border-white/10 hover:bg-white/5'}`} onClick={() => setOpen(false)}>
+                <NavLink
+                  key={item.label}
+                  to={item.to}
+                  className={({ isActive }) =>
+                    `block rounded-2xl border px-4 py-2 text-sm transition ${isActive
+                      ? 'border-emerald-300/60 bg-emerald-900/40 text-emerald-50'
+                      : 'border-transparent text-white/80 hover:border-white/10 hover:bg-white/5'
+                    }`
+                  }
+                  onClick={() => setOpen(false)}
+                >
                   {item.label}
                 </NavLink>
-              );
-            })}
+              )
+            )}
           </nav>
         </aside>
 
@@ -47,7 +56,7 @@ export default function ModuleLayout() {
           <header className="flex items-center justify-between border-b border-white/10 px-5 py-4 sm:px-6">
             <div>
               <button type="button" onClick={() => setOpen(true)} className="mr-3 rounded-xl border border-white/15 px-3 py-2 text-sm lg:hidden">Menu</button>
-              <span className="handwriting text-2xl text-white/80">Enterprise Asset & Resource Management</span>
+              <span className="handwriting text-2xl text-white/80">Enterprise Asset &amp; Resource Management</span>
             </div>
             <div className="hidden items-center gap-4 sm:flex">
               <div className="rounded-full border border-white/10 bg-white/5 px-4 py-2 text-sm text-white/70">Module 3</div>

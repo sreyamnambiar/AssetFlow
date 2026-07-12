@@ -126,11 +126,11 @@ export const deleteMaintenanceRequest = async (req, res) => {
   }
 };
 
-// GET /api/users/technicians (or similar)
+// GET /api/users/technicians  (consumed by userRoutes.js)
 export const getTechnicians = async (req, res) => {
   try {
-    const technicians = await User.find({ role: 'technician' }).select('-password');
-    res.status(200).json(technicians);
+    const technicians = await User.find({ status: 'active' }).select('name email role department').sort({ name: 1 });
+    res.status(200).json({ success: true, data: technicians });
   } catch (error) {
     res.status(500).json({ message: 'Failed to fetch technicians', error: error.message });
   }
