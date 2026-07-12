@@ -1,17 +1,17 @@
 import { Router } from 'express';
-
-// Import feature routes (uncomment and add when implementing)
-// import authRoutes from './authRoutes.js';
-// import departmentRoutes from './departmentRoutes.js';
-// import assetRoutes from './assetRoutes.js';
-// import bookingRoutes from './bookingRoutes.js';
+import assetRoutes from './assetRoutes.js';
+import bookingRoutes from './bookingRoutes.js';
+import maintenanceRoutes from './maintenanceRoutes.js';
+import userRoutes from './userRoutes.js';
+import auditRoutes from './auditRoutes.js';
 
 const router = Router();
 
-// Mount routes
-// router.use('/auth', authRoutes);
-// router.use('/departments', departmentRoutes);
-// router.use('/assets', assetRoutes);
-// router.use('/bookings', bookingRoutes);
+// Mount active feature routes
+router.use('/assets', assetRoutes);
+router.use('/bookings', bookingRoutes);
+router.use('/maintenance', maintenanceRoutes);
+router.use('/users', userRoutes);
+router.use('/audit', auditRoutes);
 
 export default router;

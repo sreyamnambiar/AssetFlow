@@ -8,5 +8,56 @@ export async function connectDb() {
   }
 
   mongoose.set('strictQuery', true);
-  await mongoose.connect(mongoUri);
+
+  try {
+    await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
+    console.log(`MongoDB connected: ${mongoUri}`);
+  } catch (primaryErr) {
+    // Fallback: use in-memory MongoDB for development
+    console.warn(`Could not connect to ${mongoUri} — falling back to in-memory MongoDB`);
+    try {
+      const { MongoMemoryServer } = await import('mongodb-memory-server');
+      const mongod = await MongoMemoryServer.create();
+      const inMemoryUri = mongod.getUri();
+      await mongoose.connect(inMemoryUri);
+      console.log(`In-memory MongoDB started at ${inMemoryUri}`);
+
+      // Seed demo data so the app is useful out-of-the-box
+      await seedDemoData();
+    } catch (fallbackErr) {
+      console.error('Failed to start in-memory MongoDB:', fallbackErr);
+      throw primaryErr;
+    }
+  }
+}
+
+async function seedDemoData() {
+  const { User } = await import('../models/User.js');
+  const { Asset } = await import('../models/Asset.js');
+
+  const userCount = await User.countDocuments();
+  if (userCount === 0) {
+    await User.insertMany([
+      { name: 'Alice Manager', email: 'alice@assetflow.dev', role: 'admin',   department: 'Engineering' },
+      { name: 'Bob Auditor',   email: 'bob@assetflow.dev',   role: 'auditor', department: 'Finance'     },
+      { name: 'Carol Auditor', email: 'carol@assetflow.dev', role: 'auditor', department: 'Engineering' },
+      { name: 'Dave Staff',    email: 'dave@assetflow.dev',  role: 'staff',   department: 'Operations'  },
+    ]);
+    console.log('Seeded demo users');
+  }
+
+  const assetCount = await Asset.countDocuments();
+  if (assetCount === 0) {
+    await Asset.insertMany([
+      { assetCode: 'AST-001', name: 'Dell Laptop 15"',        category: 'IT Equipment', location: 'Desk E12',     status: 'available' },
+      { assetCode: 'AST-002', name: 'HP Monitor 27"',         category: 'IT Equipment', location: 'Desk E12',     status: 'available' },
+      { assetCode: 'AST-003', name: 'Cisco IP Phone',         category: 'Networking',   location: 'Reception',    status: 'in_use'    },
+      { assetCode: 'AST-004', name: 'Canon Printer MFP',      category: 'Office',       location: 'Print Room B', status: 'available' },
+      { assetCode: 'AST-005', name: 'MacBook Pro 14"',        category: 'IT Equipment', location: 'Desk F03',     status: 'in_use'    },
+      { assetCode: 'AST-006', name: 'Epson Projector EB-X51', category: 'AV',           location: 'Conf Room 1',  status: 'available' },
+      { assetCode: 'AST-007', name: 'Logitech Webcam',        category: 'IT Equipment', location: 'Desk F05',     status: 'available' },
+      { assetCode: 'AST-008', name: 'UPS Power Backup',       category: 'Electrical',   location: 'Server Room',  status: 'in_use'    },
+    ]);
+    console.log('Seeded demo assets');
+  }
 }
