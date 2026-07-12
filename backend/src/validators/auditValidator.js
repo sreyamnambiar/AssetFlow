@@ -1,7 +1,7 @@
 import { body, param } from 'express-validator';
 
 export const validateAuditId = [
-  param('id').isMongoId().withMessage('Invalid audit cycle id')
+  param('id').isMongoId().withMessage('Invalid audit cycle id'),
 ];
 
 export const validateAuditCycleCreate = [
@@ -21,5 +21,18 @@ export const validateAuditCycleCreate = [
       return true;
     }),
   body('auditors').optional().isArray().withMessage('Auditors must be an array'),
-  body('auditors.*').optional().isMongoId().withMessage('Invalid auditor user ID')
+  body('auditors.*').optional().isMongoId().withMessage('Invalid auditor user ID'),
+];
+
+export const validateVerifyRecord = [
+  param('id').isMongoId().withMessage('Invalid audit cycle id'),
+  body('recordId').isMongoId().withMessage('Invalid record id'),
+  body('status')
+    .isIn(['pending', 'verified', 'missing', 'damaged'])
+    .withMessage('Status must be pending, verified, missing, or damaged'),
+  body('notes').optional().isString().trim(),
+];
+
+export const validateCloseAudit = [
+  param('id').isMongoId().withMessage('Invalid audit cycle id'),
 ];
