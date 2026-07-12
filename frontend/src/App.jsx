@@ -10,11 +10,24 @@ import ReportsPage from './pages/ReportsPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
 import ActivityLogsPage from './pages/ActivityLogsPage.jsx';
 
+// Allocation & Transfer Module Pages
+import DashboardPage from './pages/DashboardPage.jsx';
+import AssetAllocationPage from './pages/AssetAllocationPage.jsx';
+import TransferPage from './pages/TransferPage.jsx';
+import AssetDetailsPage from './pages/AssetDetailsPage.jsx';
+import EmployeeAssetsPage from './pages/EmployeeAssetsPage.jsx';
+
 export default function App() {
   return (
     <Routes>
       <Route element={<ModuleLayout />}>
-        <Route path="/"                 element={<Navigate to="/resource-booking" replace />} />
+        <Route path="/"                 element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard"        element={<DashboardPage />} />
+        <Route path="/allocations"      element={<AssetAllocationPage />} />
+        <Route path="/transfers"        element={<TransferPage />} />
+        <Route path="/assets/:id"       element={<AssetDetailsPage />} />
+        <Route path="/employee-assets"  element={<EmployeeAssetsPage />} />
+        
         <Route path="/resource-booking" element={<BookingPage />} />
         <Route path="/maintenance"      element={<MaintenancePage />} />
         <Route path="/audit"            element={<AuditPage />} />

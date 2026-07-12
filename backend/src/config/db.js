@@ -35,16 +35,31 @@ export const connectDb = async () => {
 async function seedDemoData() {
   const { User } = await import('../models/User.js');
   const { Asset } = await import('../models/Asset.js');
+  const { Department } = await import('../models/Department.js');
+
+  const deptCount = await Department.countDocuments();
+  let depts = [];
+  if (deptCount === 0) {
+    depts = await Department.insertMany([
+      { name: 'IT & Security', code: 'IT', description: 'Information Technology' },
+      { name: 'Engineering', code: 'ENG', description: 'Software Development and IT Operations' },
+      { name: 'Operations', code: 'OPS', description: 'Operations and Logistics' },
+      { name: 'Human Resources', code: 'HR', description: 'Human Resources and Talent Acquisition' },
+    ]);
+    console.log('Seeded demo departments');
+  } else {
+    depts = await Department.find();
+  }
 
   const userCount = await User.countDocuments();
   if (userCount === 0) {
     const bcrypt = (await import('bcryptjs')).default;
     const hashed = await bcrypt.hash('password123', 10);
     await User.collection.insertMany([
-      { name: 'Alice Manager', email: 'alice@assetflow.dev', role: 'admin',           status: 'active', password: hashed, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Bob Auditor',   email: 'bob@assetflow.dev',   role: 'asset_manager',   status: 'active', password: hashed, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Carol Auditor', email: 'carol@assetflow.dev', role: 'department_head', status: 'active', password: hashed, createdAt: new Date(), updatedAt: new Date() },
-      { name: 'Dave Staff',    email: 'dave@assetflow.dev',  role: 'employee',        status: 'active', password: hashed, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Alice Manager', email: 'alice@assetflow.dev', role: 'admin',           status: 'active', password: hashed, department: depts[0]?._id, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Bob Auditor',   email: 'bob@assetflow.dev',   role: 'asset_manager',   status: 'active', password: hashed, department: depts[1]?._id, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Carol Auditor', email: 'carol@assetflow.dev', role: 'department_head', status: 'active', password: hashed, department: depts[2]?._id, createdAt: new Date(), updatedAt: new Date() },
+      { name: 'Dave Staff',    email: 'dave@assetflow.dev',  role: 'employee',        status: 'active', password: hashed, department: depts[3]?._id, createdAt: new Date(), updatedAt: new Date() },
     ]);
     console.log('Seeded demo users');
   }
