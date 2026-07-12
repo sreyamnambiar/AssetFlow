@@ -31,4 +31,4 @@ router.use('/activity-logs', activityLogRoutes);
 // Member2 module routes – replaces the old basic /assets route
 router.use('/', member2Routes);
 
-export default router;
+export default router;

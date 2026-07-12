@@ -5,7 +5,7 @@ import { AppError } from '../utils/AppError.js';
 const JWT_SECRET = process.env.JWT_SECRET || 'change-me';
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '7d';
 
-export async function registerUser({ name, email, password, department }) {
+export async function registerUser({ name, email, password, department = null }) {
   const existingUser = await User.findOne({ email }).lean();
   if (existingUser) {
     throw new AppError('Email already in use', 409);

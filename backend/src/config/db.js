@@ -1,11 +1,14 @@
 import mongoose from "mongoose";
 
 export const connectDb = async () => {
-  if (!process.env.MONGO_URI) {
+  const mongoUri = process.env.MONGO_URI;
+
+  console.log("MONGO_URI =", mongoUri); // <-- Add this line
+
+  if (!mongoUri) {
     throw new Error("MONGO_URI is not configured");
   }
 
-  const mongoUri = process.env.MONGO_URI;
   mongoose.set('strictQuery', true);
 
   try {
