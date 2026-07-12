@@ -2,10 +2,10 @@ import { useState } from 'react';
 import { NavLink, Outlet } from 'react-router-dom';
 
 const navItems = [
-  { label: 'Dashboard',           to: '#' },
-  { label: 'Organization setup',  to: '#' },
-  { label: 'Assets',              to: '#' },
-  { label: 'Allocation & Transfer', to: '#' },
+  { label: 'Dashboard',           to: '/dashboard' },
+  { label: 'Allocations',         to: '/allocations' },
+  { label: 'Transfers',           to: '/transfers' },
+  { label: 'Employee Assets',     to: '/employee-assets' },
   { label: 'Resource Booking',    to: '/resource-booking' },
   { label: 'Maintenance',         to: '/maintenance' },
   { label: 'Audit',               to: '/audit' },
