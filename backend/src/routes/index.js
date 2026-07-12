@@ -1,7 +1,7 @@
 import { Router } from 'express';
+
 // Import feature routes
 import authRoutes from './authRoutes.js';
-// import departmentRoutes from './departmentRoutes.js';
 import assetRoutes from './assetRoutes.js';
 import bookingRoutes from './bookingRoutes.js';
 import maintenanceRoutes from './maintenanceRoutes.js';

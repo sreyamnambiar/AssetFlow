@@ -1,20 +1,21 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-export async function connectDb() {
-  const mongoUri = process.env.MONGO_URI;
-
-  if (!mongoUri) {
-    throw new Error('MONGO_URI is not configured');
+export const connectDb = async () => {
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is not configured");
   }
 
+  const mongoUri = process.env.MONGO_URI;
   mongoose.set('strictQuery', true);
 
   try {
+    // Attempt standard connection. The user might have a bad string or bad auth.
+    // If it fails, we fall back gracefully.
     await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
-    console.log(`MongoDB connected: ${mongoUri}`);
+    console.log(`MongoDB connected: ${mongoUri.replace(/:([^:@]+)@/, ':****@')}`);
   } catch (primaryErr) {
     // Fallback: use in-memory MongoDB for development
-    console.warn(`Could not connect to ${mongoUri} — falling back to in-memory MongoDB`);
+    console.warn(`Could not connect to ${mongoUri.replace(/:([^:@]+)@/, ':****@')} — falling back to in-memory MongoDB`);
     try {
       const { MongoMemoryServer } = await import('mongodb-memory-server');
       const mongod = await MongoMemoryServer.create();
@@ -29,7 +30,7 @@ export async function connectDb() {
       throw primaryErr;
     }
   }
-}
+};
 
 async function seedDemoData() {
   const { User } = await import('../models/User.js');
