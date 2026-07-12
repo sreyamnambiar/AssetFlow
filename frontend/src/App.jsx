@@ -7,6 +7,8 @@ import Signup from './pages/Signup.jsx';
 import ForgotPassword from './pages/ForgotPassword.jsx';
 import AuditPage from './pages/AuditPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
+import NotificationsPage from './pages/NotificationsPage.jsx';
+import ActivityLogsPage from './pages/ActivityLogsPage.jsx';
 
 export default function App() {
   return (
@@ -17,6 +19,8 @@ export default function App() {
         <Route path="/maintenance"      element={<MaintenancePage />} />
         <Route path="/audit"            element={<AuditPage />} />
         <Route path="/reports"          element={<ReportsPage />} />
+        <Route path="/notifications"    element={<NotificationsPage />} />
+        <Route path="/activity-logs"    element={<ActivityLogsPage />} />
       </Route>
       
       {/* Auth Routes */}

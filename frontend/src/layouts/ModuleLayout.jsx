@@ -10,7 +10,8 @@ const navItems = [
   { label: 'Maintenance',         to: '/maintenance' },
   { label: 'Audit',               to: '/audit' },
   { label: 'Reports',             to: '/reports' },
-  { label: 'Notifications',       to: '#' },
+  { label: 'Notifications',       to: '/notifications' },
+  { label: 'Activity Logs',       to: '/activity-logs' },
 ];
 
 export default function ModuleLayout() {
