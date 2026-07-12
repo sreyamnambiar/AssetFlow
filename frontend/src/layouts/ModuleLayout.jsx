@@ -8,7 +8,7 @@ const navItems = [
   { label: 'Allocation & Transfer', to: '#' },
   { label: 'Resource Booking', to: '/resource-booking' },
   { label: 'Maintenance', to: '/maintenance' },
-  { label: 'Audit', to: '#' },
+  { label: 'Audit', to: '/audit' },
   { label: 'Reports', to: '#' },
   { label: 'Notifications', to: '#' },
 ];

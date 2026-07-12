@@ -125,3 +125,13 @@ export const deleteMaintenanceRequest = async (req, res) => {
     res.status(500).json({ message: 'Failed to delete maintenance request', error: error.message });
   }
 };
+
+// GET /api/users/technicians (or similar)
+export const getTechnicians = async (req, res) => {
+  try {
+    const technicians = await User.find({ role: 'technician' }).select('-password');
+    res.status(200).json(technicians);
+  } catch (error) {
+    res.status(500).json({ message: 'Failed to fetch technicians', error: error.message });
+  }
+};
