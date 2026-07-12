@@ -178,6 +178,34 @@ export default function ReportsPage() {
     load();
   }, []);
 
+  function exportToCSV() {
+    let csv = 'Report Data Export\n\n';
+    
+    // Department Summary
+    csv += 'Department Allocation\n';
+    csv += 'Department,Assets,Active Cycles,Closed Cycles\n';
+    departments.forEach(d => {
+      csv += `"${d.department}",${d.assetCount},${d.activeCycles},${d.closedCycles}\n`;
+    });
+    
+    // Idle Assets
+    csv += '\nIdle Assets\n';
+    csv += 'Asset,Category,Location,Idle Days\n';
+    idle.forEach(a => {
+      csv += `"${a.assetCode} - ${a.name}","${a.category}","${a.location}",${a.idleDays || 'Never'}\n`;
+    });
+    
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.setAttribute('download', 'AssetFlow_Report.csv');
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    notify('success', 'Exported', 'Excel/CSV file downloaded successfully.');
+  }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center py-24">
@@ -191,11 +219,21 @@ export default function ReportsPage() {
       <ToastNotification toast={toast} onClose={close} />
 
       {/* Header */}
-      <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-sm">
-        <h2 className="handwriting text-5xl text-white">Reports &amp; Analytics</h2>
-        <p className="mt-2 text-sm text-white/55 max-w-2xl">
-          Asset utilization, maintenance trends, booking heatmap, idle assets, and retirement forecasts.
-        </p>
+      <section className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur-sm shadow-sketch flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 print:hidden">
+        <div>
+          <h2 className="handwriting text-5xl text-white">Reports &amp; Analytics</h2>
+          <p className="mt-2 text-sm text-white/55 max-w-2xl">
+            Asset utilization, maintenance trends, booking heatmap, idle assets, and retirement forecasts.
+          </p>
+        </div>
+        <div className="flex gap-2">
+          <button onClick={() => window.print()} className="rounded-xl border border-white/15 bg-white/5 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/10">
+            Export PDF
+          </button>
+          <button onClick={exportToCSV} className="rounded-xl border border-emerald-400/50 bg-emerald-900/30 px-4 py-2 text-sm font-medium text-emerald-100 transition hover:bg-emerald-900/50">
+            Export Excel
+          </button>
+        </div>
       </section>
 
       {/* Row 1 — Charts */}

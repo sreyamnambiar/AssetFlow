@@ -62,4 +62,29 @@ async function seedDemoData() {
     ]);
     console.log('Seeded demo assets');
   }
+
+  // Seed demo Notifications & Activity Logs
+  const { Notification } = await import('../models/Notification.js');
+  const { ActivityLog } = await import('../models/ActivityLog.js');
+  
+  if ((await Notification.countDocuments()) === 0 && (await User.countDocuments()) > 0) {
+    const defaultUser = await User.findOne({ email: 'alice@assetflow.dev' });
+    if (defaultUser) {
+      await Notification.insertMany([
+        { user_id: defaultUser._id, title: 'Asset Assigned', message: 'Dell Laptop 15" has been assigned to you.', type: 'Alert', is_read: false, created_at: new Date(Date.now() - 3600000 * 2) },
+        { user_id: defaultUser._id, title: 'Booking Confirmed', message: 'Your booking for Conf Room 1 is confirmed.', type: 'Booking', is_read: true, created_at: new Date(Date.now() - 3600000 * 24) },
+        { user_id: defaultUser._id, title: 'Transfer Approved', message: 'Asset AST-002 transfer to Finance is approved.', type: 'Approval', is_read: false, created_at: new Date(Date.now() - 3600000 * 48) },
+        { user_id: defaultUser._id, title: 'Maintenance Alert', message: 'Routine maintenance due for AST-004.', type: 'Alert', is_read: false, created_at: new Date(Date.now() - 3600000 * 72) },
+      ]);
+      console.log('Seeded demo notifications');
+
+      await ActivityLog.insertMany([
+        { user_id: defaultUser._id, action: 'Asset Assigned', module: 'Assets', description: 'Assigned AST-001 to Alice Manager', created_at: new Date(Date.now() - 3600000 * 2) },
+        { user_id: defaultUser._id, action: 'Booking Created', module: 'Bookings', description: 'Created booking for Conf Room 1', created_at: new Date(Date.now() - 3600000 * 24) },
+        { user_id: defaultUser._id, action: 'Transfer Approved', module: 'Transfers', description: 'Approved transfer of AST-002', created_at: new Date(Date.now() - 3600000 * 48) },
+        { user_id: defaultUser._id, action: 'System Login', module: 'Auth', description: 'Alice Manager logged in successfully', created_at: new Date(Date.now() - 3600000 * 1) },
+      ]);
+      console.log('Seeded demo activity logs');
+    }
+  }
 }
