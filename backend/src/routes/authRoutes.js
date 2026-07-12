@@ -1,6 +1,6 @@
 import { Router } from 'express';
 import { forgotPassword, getMe, login, signup } from '../controllers/authController.js';
-import { requireAuth } from '../middleware/authMiddleware.js';
+import { requireAuth } from '../middlewares/authMiddleware.js';
 import {
   validateForgotPassword,
   validateLogin,

@@ -15,7 +15,7 @@ export default function Login() {
     try {
       const response = await http.post('/auth/login', { email, password });
       localStorage.setItem('token', response.data.data.token);
-      window.location.reload();
+      window.location.href = '/';
     } catch (err) {
       setError(String(err));
     } finally {

@@ -1,20 +1,21 @@
-import mongoose from 'mongoose';
+import mongoose from "mongoose";
 
-export async function connectDb() {
-  const mongoUri = process.env.MONGO_URI;
-
-  if (!mongoUri) {
-    throw new Error('MONGO_URI is not configured');
+export const connectDb = async () => {
+  if (!process.env.MONGO_URI) {
+    throw new Error("MONGO_URI is not configured");
   }
 
+  const mongoUri = process.env.MONGO_URI;
   mongoose.set('strictQuery', true);
 
   try {
+    // Attempt standard connection. The user might have a bad string or bad auth.
+    // If it fails, we fall back gracefully.
     await mongoose.connect(mongoUri, { serverSelectionTimeoutMS: 3000 });
-    console.log(`MongoDB connected: ${mongoUri}`);
+    console.log(`MongoDB connected: ${mongoUri.replace(/:([^:@]+)@/, ':****@')}`);
   } catch (primaryErr) {
     // Fallback: use in-memory MongoDB for development
-    console.warn(`Could not connect to ${mongoUri} — falling back to in-memory MongoDB`);
+    console.warn(`Could not connect to ${mongoUri.replace(/:([^:@]+)@/, ':****@')} — falling back to in-memory MongoDB`);
     try {
       const { MongoMemoryServer } = await import('mongodb-memory-server');
       const mongod = await MongoMemoryServer.create();
@@ -29,7 +30,7 @@ export async function connectDb() {
       throw primaryErr;
     }
   }
-}
+};
 
 async function seedDemoData() {
   const { User } = await import('../models/User.js');
@@ -61,30 +62,5 @@ async function seedDemoData() {
       { assetCode: 'AST-008', name: 'UPS Power Backup',       category: 'Electrical',   location: 'Server Room',  status: 'in_use'    },
     ]);
     console.log('Seeded demo assets');
-  }
-
-  // Seed demo Notifications & Activity Logs
-  const { Notification } = await import('../models/Notification.js');
-  const { ActivityLog } = await import('../models/ActivityLog.js');
-  
-  if ((await Notification.countDocuments()) === 0 && (await User.countDocuments()) > 0) {
-    const defaultUser = await User.findOne({ email: 'alice@assetflow.dev' });
-    if (defaultUser) {
-      await Notification.insertMany([
-        { user_id: defaultUser._id, title: 'Asset Assigned', message: 'Dell Laptop 15" has been assigned to you.', type: 'Alert', is_read: false, created_at: new Date(Date.now() - 3600000 * 2) },
-        { user_id: defaultUser._id, title: 'Booking Confirmed', message: 'Your booking for Conf Room 1 is confirmed.', type: 'Booking', is_read: true, created_at: new Date(Date.now() - 3600000 * 24) },
-        { user_id: defaultUser._id, title: 'Transfer Approved', message: 'Asset AST-002 transfer to Finance is approved.', type: 'Approval', is_read: false, created_at: new Date(Date.now() - 3600000 * 48) },
-        { user_id: defaultUser._id, title: 'Maintenance Alert', message: 'Routine maintenance due for AST-004.', type: 'Alert', is_read: false, created_at: new Date(Date.now() - 3600000 * 72) },
-      ]);
-      console.log('Seeded demo notifications');
-
-      await ActivityLog.insertMany([
-        { user_id: defaultUser._id, action: 'Asset Assigned', module: 'Assets', description: 'Assigned AST-001 to Alice Manager', created_at: new Date(Date.now() - 3600000 * 2) },
-        { user_id: defaultUser._id, action: 'Booking Created', module: 'Bookings', description: 'Created booking for Conf Room 1', created_at: new Date(Date.now() - 3600000 * 24) },
-        { user_id: defaultUser._id, action: 'Transfer Approved', module: 'Transfers', description: 'Approved transfer of AST-002', created_at: new Date(Date.now() - 3600000 * 48) },
-        { user_id: defaultUser._id, action: 'System Login', module: 'Auth', description: 'Alice Manager logged in successfully', created_at: new Date(Date.now() - 3600000 * 1) },
-      ]);
-      console.log('Seeded demo activity logs');
-    }
   }
 }

@@ -2,6 +2,9 @@ import { Navigate, Route, Routes } from 'react-router-dom';
 import ModuleLayout from './layouts/ModuleLayout.jsx';
 import BookingPage from './pages/BookingPage.jsx';
 import MaintenancePage from './pages/MaintenancePage.jsx';
+import Login from './pages/Login.jsx';
+import Signup from './pages/Signup.jsx';
+import ForgotPassword from './pages/ForgotPassword.jsx';
 import AuditPage from './pages/AuditPage.jsx';
 import ReportsPage from './pages/ReportsPage.jsx';
 import NotificationsPage from './pages/NotificationsPage.jsx';
@@ -19,6 +22,11 @@ export default function App() {
         <Route path="/notifications"    element={<NotificationsPage />} />
         <Route path="/activity-logs"    element={<ActivityLogsPage />} />
       </Route>
+      
+      {/* Auth Routes */}
+      <Route path="/login" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><Login /></div>} />
+      <Route path="/signup" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><Signup /></div>} />
+      <Route path="/forgot-password" element={<div className="min-h-screen flex items-center justify-center bg-[#0a0a0a]"><ForgotPassword /></div>} />
     </Routes>
   );
 }

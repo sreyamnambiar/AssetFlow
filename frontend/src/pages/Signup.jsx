@@ -16,7 +16,7 @@ export default function Signup() {
     try {
       const response = await http.post('/auth/signup', { name, email, password });
       localStorage.setItem('token', response.data.data.token);
-      window.location.reload();
+      window.location.href = '/';
     } catch (err) {
       setError(String(err));
     } finally {

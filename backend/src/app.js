@@ -21,7 +21,9 @@ app.get('/api/health', (_req, res) => {
   res.json({ success: true, message: 'AssetFlow API is running' });
 });
 
+// All routes
 app.use('/api', apiRoutes);
+
 app.use(notFound);
 app.use(errorHandler);
 
