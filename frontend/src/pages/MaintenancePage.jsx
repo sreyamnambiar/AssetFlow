@@ -2,12 +2,14 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import MaintenanceTimeline from '../components/MaintenanceTimeline';
 import MaintenanceForm from '../components/MaintenanceForm';
+import MaintenanceTable from '../components/MaintenanceTable';
 
 const MaintenancePage = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [activeTab, setActiveTab] = useState('board'); // 'board' or 'list'
   const [assets, setAssets] = useState([]);
 
   const fetchRequests = async () => {
@@ -57,10 +59,26 @@ const MaintenancePage = () => {
   return (
     <div className="p-6 bg-gray-950 h-full text-gray-200 flex flex-col">
       <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold">Maintenance Management</h1>
+        <div className="flex items-center gap-6">
+          <h1 className="text-2xl font-bold">Maintenance Management</h1>
+          <div className="bg-gray-900 p-1 rounded-md border border-gray-800 hidden sm:flex">
+            <button 
+              onClick={() => setActiveTab('board')}
+              className={`px-4 py-1.5 rounded-md text-sm transition-colors ${activeTab === 'board' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              Board View
+            </button>
+            <button 
+              onClick={() => setActiveTab('list')}
+              className={`px-4 py-1.5 rounded-md text-sm transition-colors ${activeTab === 'list' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+            >
+              List View
+            </button>
+          </div>
+        </div>
         <button 
           onClick={() => setShowForm(!showForm)}
-          className="bg-green-900 hover:bg-green-800 text-green-100 border border-green-700 py-2 px-4 rounded-md"
+          className="bg-green-900 hover:bg-green-800 text-green-100 border border-green-700 py-2 px-4 rounded-md shadow-sm"
         >
           {showForm ? 'Cancel' : '+ New Request'}
         </button>
@@ -83,11 +101,19 @@ const MaintenancePage = () => {
       ) : error ? (
         <div className="text-red-500 bg-red-900/20 p-4 rounded-md">{error}</div>
       ) : (
-        <MaintenanceTimeline requests={requests} onStatusChange={handleStatusChange} />
+        <div className="flex-1 overflow-hidden flex flex-col">
+          {activeTab === 'board' ? (
+            <>
+              <MaintenanceTimeline requests={requests} onStatusChange={handleStatusChange} />
+              <div className="mt-4 text-sm text-gray-500">
+                Approving a card moves the asset to under maintenance, resolving return it to availble
+              </div>
+            </>
+          ) : (
+            <MaintenanceTable requests={requests} onRefresh={fetchRequests} />
+          )}
+        </div>
       )}
-      <div className="mt-4 text-sm text-gray-500">
-        Approving a card moves the asset to under maintenance, resolving return it to availble
-      </div>
     </div>
   );
 };

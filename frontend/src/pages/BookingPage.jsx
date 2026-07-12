@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import BookingCalendar from '../components/BookingCalendar';
 import BookingForm from '../components/BookingForm';
+import BookingTable from '../components/BookingTable';
 
 const BookingPage = () => {
   const [assets, setAssets] = useState([]);
@@ -11,6 +12,7 @@ const BookingPage = () => {
   const [newBooking, setNewBooking] = useState(null); // Preview state
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('book'); // 'book' or 'history'
 
   useEffect(() => {
     // Fetch bookable assets (assuming a generic endpoint or filtering logic)
@@ -26,17 +28,28 @@ const BookingPage = () => {
       });
   }, []);
 
-  useEffect(() => {
+  const fetchBookings = () => {
     if (selectedAsset && selectedDate) {
       setLoading(true);
       axios.get(`/api/bookings?assetId=${selectedAsset}&bookingDate=${selectedDate}`)
         .then(res => setBookings(res.data))
         .catch(err => setError(err.response?.data?.message || err.message))
         .finally(() => setLoading(false));
+    } else if (activeTab === 'history') {
+      setLoading(true);
+      // Fetch all bookings for history
+      axios.get(`/api/bookings`)
+        .then(res => setBookings(res.data))
+        .catch(err => setError(err.response?.data?.message || err.message))
+        .finally(() => setLoading(false));
     } else {
       setBookings([]);
     }
-  }, [selectedAsset, selectedDate]);
+  };
+
+  useEffect(() => {
+    fetchBookings();
+  }, [selectedAsset, selectedDate, activeTab]);
 
   const handleBookingChange = (preview) => {
     setNewBooking(preview);
@@ -54,10 +67,27 @@ const BookingPage = () => {
   };
 
   return (
-    <div className="p-6 bg-gray-950 h-full text-gray-200">
-      <h1 className="text-2xl font-bold mb-6">Resource Booking</h1>
+    <div className="p-6 bg-gray-950 h-full text-gray-200 flex flex-col">
+      <div className="flex justify-between items-center mb-6">
+        <h1 className="text-2xl font-bold">Resource Booking</h1>
+        <div className="bg-gray-900 p-1 rounded-md border border-gray-800 inline-flex">
+          <button 
+            onClick={() => setActiveTab('book')}
+            className={`px-4 py-2 rounded-md text-sm transition-colors ${activeTab === 'book' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+          >
+            Book a Resource
+          </button>
+          <button 
+            onClick={() => setActiveTab('history')}
+            className={`px-4 py-2 rounded-md text-sm transition-colors ${activeTab === 'history' ? 'bg-green-900/30 text-green-400 font-medium' : 'text-gray-400 hover:text-gray-200'}`}
+          >
+            My Bookings
+          </button>
+        </div>
+      </div>
       
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+      {activeTab === 'book' ? (
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 flex-1 overflow-hidden">
         <div className="lg:col-span-1">
           <BookingForm 
             assets={assets}
@@ -86,6 +116,17 @@ const BookingPage = () => {
           )}
         </div>
       </div>
+      ) : (
+        <div className="flex-1 overflow-auto">
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-white"></div>
+            </div>
+          ) : (
+            <BookingTable bookings={bookings} onRefresh={fetchBookings} />
+          )}
+        </div>
+      )}
     </div>
   );
 };
